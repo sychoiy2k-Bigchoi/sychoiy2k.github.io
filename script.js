@@ -5,21 +5,85 @@
   var yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+  // 한글 / 영문 전환
+  // 한글은 HTML 본문 그대로, 영문은 data-en / data-en-aria-label / data-en-content 속성에 있음
+  var STORAGE_KEY = 'lang';
+  var currentLang = 'ko';
+  var attrMap = { 'data-en-aria-label': 'aria-label', 'data-en-content': 'content' };
+
+  var textEls = document.querySelectorAll('[data-en]');
+  textEls.forEach(function (el) { el.dataset.ko = el.innerHTML; });
+
+  Object.keys(attrMap).forEach(function (enAttr) {
+    document.querySelectorAll('[' + enAttr + ']').forEach(function (el) {
+      el.setAttribute('data-ko-' + attrMap[enAttr], el.getAttribute(attrMap[enAttr]));
+    });
+  });
+
+  function setLang(lang) {
+    currentLang = lang === 'en' ? 'en' : 'ko';
+    var isEn = currentLang === 'en';
+    document.documentElement.lang = currentLang;
+
+    textEls.forEach(function (el) {
+      el.innerHTML = isEn ? el.dataset.en : el.dataset.ko;
+    });
+
+    Object.keys(attrMap).forEach(function (enAttr) {
+      var attr = attrMap[enAttr];
+      document.querySelectorAll('[' + enAttr + ']').forEach(function (el) {
+        el.setAttribute(attr, isEn ? el.getAttribute(enAttr) : el.getAttribute('data-ko-' + attr));
+      });
+    });
+
+    document.querySelectorAll('.lang-switch [data-lang]').forEach(function (btn) {
+      btn.setAttribute('aria-pressed', String(btn.dataset.lang === currentLang));
+    });
+
+    updateToggleLabel();
+  }
+
+  // 우선순위: 주소의 ?lang=en > 이전에 고른 언어 > 브라우저 언어
+  function initialLang() {
+    var param = new URLSearchParams(location.search).get('lang');
+    if (param === 'ko' || param === 'en') return param;
+    try {
+      var saved = localStorage.getItem(STORAGE_KEY);
+      if (saved === 'ko' || saved === 'en') return saved;
+    } catch (e) {}
+    return (navigator.language || 'ko').toLowerCase().indexOf('ko') === 0 ? 'ko' : 'en';
+  }
+
+  document.querySelectorAll('.lang-switch [data-lang]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      setLang(btn.dataset.lang);
+      try { localStorage.setItem(STORAGE_KEY, currentLang); } catch (e) {}
+    });
+  });
+
   // 모바일 메뉴 토글
   var toggle = document.querySelector('.nav__toggle');
   var menu = document.getElementById('nav-menu');
 
+  function updateToggleLabel() {
+    var open = menu.classList.contains('is-open');
+    var labels = currentLang === 'en' ? ['Open menu', 'Close menu'] : ['메뉴 열기', '메뉴 닫기'];
+    toggle.setAttribute('aria-label', open ? labels[1] : labels[0]);
+  }
+
   function closeMenu() {
     menu.classList.remove('is-open');
     toggle.setAttribute('aria-expanded', 'false');
-    toggle.setAttribute('aria-label', '메뉴 열기');
+    updateToggleLabel();
   }
 
   toggle.addEventListener('click', function () {
     var open = menu.classList.toggle('is-open');
     toggle.setAttribute('aria-expanded', String(open));
-    toggle.setAttribute('aria-label', open ? '메뉴 닫기' : '메뉴 열기');
+    updateToggleLabel();
   });
+
+  setLang(initialLang());
 
   menu.querySelectorAll('a').forEach(function (link) {
     link.addEventListener('click', closeMenu);

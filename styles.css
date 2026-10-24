@@ -111,7 +111,30 @@ svg { flex-shrink: 0; }
   color: var(--accent);
   background: var(--accent-soft-bg);
 }
+.nav__right { display: flex; align-items: center; gap: 20px; }
 .nav__menu { display: flex; align-items: center; gap: 28px; font-size: 14px; }
+
+/* 언어 선택 */
+.lang-switch {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.lang-switch button {
+  height: 28px;
+  padding: 0 10px;
+  font: 500 13px var(--font);
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color .15s, background-color .15s;
+}
+.lang-switch button:hover { color: var(--text); }
+.lang-switch button[aria-pressed="true"] { color: var(--accent-soft-text); background: var(--accent-soft-bg); }
 .nav__menu a:not(.btn) { color: var(--muted); transition: color .15s; }
 .nav__menu a:not(.btn):hover,
 .nav__menu a.is-active { color: var(--text); }
@@ -309,6 +332,7 @@ svg { flex-shrink: 0; }
 
 @media (max-width: 720px) {
   .nav__toggle { display: grid; }
+  .nav__right { gap: 10px; }
   .nav__menu {
     position: absolute;
     top: var(--nav-height);
